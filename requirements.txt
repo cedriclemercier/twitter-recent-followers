@@ -1,0 +1,4 @@
+python-decouple
+requests-html
+discord
+psycopg2
