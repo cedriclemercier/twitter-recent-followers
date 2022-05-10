@@ -1,0 +1,6 @@
+databases/*
+test_data.json
+.env
+database.ini
+accounts.csv
+__pycache__/
