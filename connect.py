@@ -53,7 +53,7 @@ def connect(args):
                 print(db_version)
             
             # close the communication with the PostgreSQL
-                cur.close()
+                # cur.close()
 
             else:
                 raise NameError('argument {} not correct! Should be dev!'.format(args[1]))
@@ -73,7 +73,7 @@ def connect(args):
             print(db_version)
         
         # close the communication with the PostgreSQL
-            cur.close()
+            # cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:
@@ -84,5 +84,3 @@ def close(conn):
     conn.close()
     print('Database connection closed.')
     
-# if __name__ == '__main__':
-#     connect()

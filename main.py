@@ -178,7 +178,7 @@ def main(accounts):
         # save json file\
         save_to_csv(new_data, username)
         
-        # send_to_discord_single(new_data, username, current_date)
+        send_to_discord_single(new_data, username, current_date)
         # # batch sending
         # discord_data[username] = new_data
     
