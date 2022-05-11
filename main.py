@@ -41,9 +41,11 @@ def bearer_oauth(r):
 def save_to_csv(data, user):
     # open the file in the write mode
     name = f'./databases/new_follows_{user}.csv'
-    
-    mode = 'a' if os.path.exists(name) else 'w'
-    with open(name, mode , newline='') as f:
+    dirname = './databases'
+     
+    if not os.path.exists(dirname):
+        os.mkdir('databases')
+    with open(name, 'a' , newline='') as f:
         # create the csv writer
         writer = csv.writer(f)
 
