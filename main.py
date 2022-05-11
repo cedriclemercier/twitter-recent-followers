@@ -43,7 +43,7 @@ def save_to_csv(data, user):
     name = f'./databases/new_follows_{user}.csv'
     
     
-    with open(name, 'a' , newline='') as f:
+    with open(name, 'a+' , newline='') as f:
         # create the csv writer
         writer = csv.writer(f)
 
