@@ -1,12 +1,10 @@
 # Query recent twitter account followings
 
-This app query what a selected twitter account has been following recently and send it to a discord bot. 
-Interacts with twitter API
+This app query what a selected twitter account has been following recently, saves into a Postgres DB and send it to a discord bot. 
+Interacts with twitter API and discord Webhook
 
 ```bash
 ├── databases
-│    └── an_account.csv     # recent followings saved as a csv file named 
-│                           # after the account
 ├── main.py                 
 ├── database.ini            # local DB config
 ├── .env                    # local env variables
@@ -78,8 +76,8 @@ Just type `python main.py` - will automatically connect to heroku DB URL set in 
 
 **TO USE LOCAL DATABASE** -> run `python main.py dev` with that extra argument
 
-Then data retrieved will be saved into file named after the accounts retrieved from in `/databases` as csv files, and new data will be send to the discord webhook provided in environment variables.
+Data retrieved from twitter API for each user will be saved into a postgres table separately. E.g `new_followers_ladygaga`
 
 
 ## Running on Heroku
-You can set it as a cron scheduled job and run this script once or twice per day like a daily digest
+You can set it as a cron scheduled job and run this script once or twice per day like a daily digest. Just add Heroku Scheduler as an addon and run `python main.py` for the script.
