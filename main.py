@@ -18,6 +18,7 @@ bearer_token = os.environ.get('BEARER_TOKEN', config('BEARER_TOKEN'))
 WEBHOOK = os.environ.get('WEBHOOK', config('WEBHOOK'))
 MAX_RESULTS = os.environ.get('MAX_RESULTS', config('MAX_RESULTS'))
 MESSAGE_TEMPLATE = os.environ.get('MESSAGE_TEMPLATE', config('MESSAGE_TEMPLATE'))
+S3_BUCKET = os.environ.get('S3_BUCKET')
 
 
 def create_url(user):
@@ -37,6 +38,7 @@ def bearer_oauth(r):
     r.headers["Authorization"] = f"Bearer {bearer_token}"
     r.headers["User-Agent"] = "v2FollowingLookupPython"
     return r
+
 
 def save_to_csv(data, user):
     # open the file in the write mode
@@ -139,8 +141,8 @@ def send_to_discord_single(data, username, current_date):
     message = f"====================\n {MESSAGE_TEMPLATE} user {username} on {current_date} \n ==================== \n "
     
     if (len(data) != 0):
-        for d in data:
-            message += f"https://twitter.com/{d[0]} \n"
+        for user in data:
+            message += f"https://twitter.com/{user} \n"
             
         message += '\n---------------------------\n'
     else:
@@ -151,10 +153,54 @@ def send_to_discord_single(data, username, current_date):
         webhook.send(message)
     except:
         print("Error sending to webhook")
+        
+        
+def save_to_db(connection, username, records, current_date):
+    cursor = connection.cursor()
+    
+    # create DB with the name of the account if not exists
+    create_table = """
+    CREATE TABLE IF NOT EXISTS new_followers_{} (
+    username VARCHAR(64) PRIMARY KEY,
+    date DATE NOT NULL);
+    """.format(username)
+    
+    print("Creating table for user if not exists...")
+    cursor.execute(create_table)
+    
+    
+    # add rows
+    sql_insert_query = """ INSERT INTO new_followers_{} (username, date) 
+                           VALUES (%s,%s)""".format(username)
+    
+    # get usernames query
+    sql_get_usernames = """
+    SELECT * FROM new_followers_{}
+    """.format(username)
+    
+    # get all usernames present in a account db's
+    cursor.execute(sql_get_usernames)
+    result = cursor.fetchall()
+    
+    # Filter. Records are what we retrieved from twitter data. Result are records present. Filter data that is not present
+    new_users = list(filter(lambda a: a not in result, records))
+    
+    # append date to records to put in database
+    new_records = [(u, current_date) for u in new_users]
+            
+    # inserting records into each user respective database               
+    try:
+        print("Inserting values into user db...")
+        cursor.executemany(sql_insert_query, new_records)
+    except:
+        print("Values existing already. Passing..")
+        
+    connection.commit()
+    
+    return new_users
 
-def main(accounts):
+def main(accounts, connection):
     current_date = date.today()
-    discord_data = {}
     
     for user in accounts:
         user_id = user[0]
@@ -162,21 +208,20 @@ def main(accounts):
         
         url = create_url(user_id)
         params = get_params()
-        json_response = connect_to_endpoint(url, params)
+        json_response = connect_to_endpoint_test(url, params)
         
         # stores data for further filtering
         data = []
 
+        # get the json data twitter usernames and append to list with current date
         for res in json_response['data']:
             data.append([res['username'], current_date])
             
+        # get only the usernames in a list
         users_list = [i[0] for i in data]
-        new_data = find_exists(users_list, username)
-
-        # puts new data in csv saveable format
-        new_data = [[e, current_date] for e in new_data]
-        # save json file\
-        save_to_csv(new_data, username)
+        
+        # find if that twitter username already exists in the database for a particular user
+        new_data = save_to_db(connection, username, users_list, current_date)
         
         send_to_discord_single(new_data, username, current_date)
         # # batch sending
@@ -225,12 +270,13 @@ def get_rows(connection):
     records = cursor.fetchall()
     return records
 
+
 if __name__ == "__main__":
     connection = connect(sys.argv)
     if connection is not None:
         insert_accounts(connection)
         accounts = get_rows(connection)
-        main(accounts)
+        main(accounts, connection)
         close(connection)
     else:
         print('Connection problem.')
