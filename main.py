@@ -208,7 +208,7 @@ def main(accounts, connection):
         
         url = create_url(user_id)
         params = get_params()
-        json_response = connect_to_endpoint_test(url, params)
+        json_response = connect_to_endpoint(url, params)
         
         # stores data for further filtering
         data = []
