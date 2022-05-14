@@ -39,22 +39,22 @@ def bearer_oauth(r):
     r.headers["User-Agent"] = "v2FollowingLookupPython"
     return r
 
-
-def save_to_csv(data, user):
-    # open the file in the write mode
-    name = f'./databases/new_follows_{user}.csv'
-    dirname = './databases'
+## LEGACY: SAVING TO CSV
+# def save_to_csv(data, user):
+#     # open the file in the write mode
+#     name = f'./databases/new_follows_{user}.csv'
+#     dirname = './databases'
      
-    if not os.path.exists(dirname):
-        os.mkdir('databases')
-    with open(name, 'a' , newline='') as f:
-        # create the csv writer
-        writer = csv.writer(f)
+#     if not os.path.exists(dirname):
+#         os.mkdir('databases')
+#     with open(name, 'a' , newline='') as f:
+#         # create the csv writer
+#         writer = csv.writer(f)
 
-        # write a row to the csv file
-        writer.writerows(data)
+#         # write a row to the csv file
+#         writer.writerows(data)
 
-    print(f"Saved to file @ {name}. Adding {len(data)} new lines to -> {user}.")
+#     print(f"Saved to file @ {name}. Adding {len(data)} new lines to -> {user}.")
 
 def connect_to_endpoint(url, params):
     response = requests.request("GET", url, auth=bearer_oauth, params=params)
@@ -74,25 +74,25 @@ def connect_to_endpoint_test(url, params):
     jsonfile = json.load(f)
     return jsonfile
 
-
-def find_exists(data, username):
-    '''
-    Finds if the username already exists in the database
-    '''
-    results = []
-    try:
-        with open(f'./databases/new_follows_{username}.csv', 'r') as f:
-            csv_reader = csv.reader(f)
-            for line in csv_reader:
-                results.append(line[0])
+## LEGACY: saves to csv
+# def find_exists(data, username):
+#     '''
+#     Finds if the username already exists in the database
+#     '''
+#     results = []
+#     try:
+#         with open(f'./databases/new_follows_{username}.csv', 'r') as f:
+#             csv_reader = csv.reader(f)
+#             for line in csv_reader:
+#                 results.append(line[0])
                 
-        new_data = list(filter(lambda a: a not in results, data))
-        print('Found file, reading data..')
-    except IOError:
-        new_data = data
-        print('File not exists.')
+#         new_data = list(filter(lambda a: a not in results, data))
+#         print('Found file, reading data..')
+#     except IOError:
+#         new_data = data
+#         print('File not exists.')
         
-    return new_data
+#     return new_data
 
 
 def send_to_discord_batch(data, current_date):
@@ -165,8 +165,10 @@ def save_to_db(connection, username, records, current_date):
     date DATE NOT NULL);
     """.format(username)
     
-    print("Creating table for user if not exists...")
-    cursor.execute(create_table)
+    try:
+        cursor.execute(create_table)
+    except:
+        print("User exists already in DB.")
     
     
     # add rows
@@ -188,6 +190,8 @@ def save_to_db(connection, username, records, current_date):
     
     # append date to records to put in database
     new_records = [(u, current_date) for u in new_users]
+    
+    print("Saved to db @ new_followers_{}. Adding {} new lines.".format(username, len(new_records)))
             
     # inserting records into each user respective database               
     try:
