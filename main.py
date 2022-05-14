@@ -181,6 +181,7 @@ def save_to_db(connection, username, records, current_date):
     # get all usernames present in a account db's
     cursor.execute(sql_get_usernames)
     result = cursor.fetchall()
+    result = [r[0] for r in result]
     
     # Filter. Records are what we retrieved from twitter data. Result are records present. Filter data that is not present
     new_users = list(filter(lambda a: a not in result, records))
