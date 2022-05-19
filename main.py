@@ -1,3 +1,4 @@
+from email import message
 from numpy import insert
 import requests
 import os
@@ -121,7 +122,21 @@ def send_to_discord_batch(data, current_date):
     # print(message)
     webhook.send(message)
     
+def send_discord_no_followings(users):
+    '''
+    List all names that have no followings in one go
+    '''
+    webhook = Webhook.from_url(WEBHOOK, adapter=RequestsWebhookAdapter())
     
+    user_list = str(users)
+    
+    message = f'\n ----------------------- \n No new follows for users: {user_list}'
+    
+    try:
+        webhook.send(message)
+    except:
+        print("Error sending to webhook")
+        
 def send_to_discord_single(data, username, current_date):
     '''
     Send batch data to discord in a single message. Not used atm
@@ -206,6 +221,7 @@ def save_to_db(connection, username, records, current_date):
 
 def main(accounts, connection):
     current_date = date.today()
+    no_new_followings = []
     
     for user in accounts:
         user_id = user[0]
@@ -228,7 +244,13 @@ def main(accounts, connection):
         # find if that twitter username already exists in the database for a particular user
         new_data = save_to_db(connection, username, users_list, current_date)
         
-        send_to_discord_single(new_data, username, current_date)
+        if (len(new_data) != 0):
+            send_to_discord_single(new_data, username, current_date)
+        else:
+            no_new_followings.append(username)
+        
+    if (len(no_new_followings) > 0):
+        send_discord_no_followings(no_new_followings)
         # # batch sending
         # discord_data[username] = new_data
     
